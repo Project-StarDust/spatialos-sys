@@ -42,13 +42,19 @@ fn generate_c_headers_package<P: AsRef<Path>>(path: P) -> Target {
 
 #[cfg(target_os = "windows")]
 fn generate_lib_package<P: AsRef<Path>>(path: P) -> Target {
+    let lib_path = path
+        .as_ref()
+        .join("dependencies/worker_sdk/lib/windows")
+        .to_str()
+        .expect("Can't convert path to string")
+        .to_string();
+    println!("cargo:rustc-link-search={}", lib_path);
+    println!("cargo:rustc-link-lib=zlibstatic");
+    println!("cargo:rustc-link-lib=improbable_worker");
+    println!("cargo:rustc-link-lib=ssl");
+    println!("cargo:rustc-link-lib=RakNetLibStatic");
     Target {
-        path: path
-            .as_ref()
-            .join("dependencies/worker_sdk/lib/windows")
-            .to_str()
-            .expect("Can't convert path to string")
-            .to_string(),
+        path: lib_path,
         r#type: "worker_sdk".to_string(),
         packages: vec![Package {
             name: "c-static-x86_64-vc141_md-win32".to_string(),
@@ -58,13 +64,19 @@ fn generate_lib_package<P: AsRef<Path>>(path: P) -> Target {
 
 #[cfg(target_os = "macos")]
 fn generate_lib_package<P: AsRef<Path>>(path: P) -> Target {
+    let lib_path = path
+        .as_ref()
+        .join("dependencies/worker_sdk/lib/windows")
+        .to_str()
+        .expect("Can't convert path to string")
+        .to_string();
+    println!("cargo:rustc-link-search={}", lib_path);
+    println!("cargo:rustc-link-lib=zlibstatic");
+    println!("cargo:rustc-link-lib=improbable_worker");
+    println!("cargo:rustc-link-lib=ssl");
+    println!("cargo:rustc-link-lib=RakNetLibStatic");
     Target {
-        path: path
-            .as_ref()
-            .join("dependencies/worker_sdk/lib/macos")
-            .to_str()
-            .expect("Can't convert path to string")
-            .to_string(),
+        path: lib_path,
         r#type: "worker_sdk".to_string(),
         packages: vec![Package {
             name: "c-static-x86_64-clang-macos".to_string(),
@@ -74,13 +86,19 @@ fn generate_lib_package<P: AsRef<Path>>(path: P) -> Target {
 
 #[cfg(target_os = "linux")]
 fn generate_lib_package<P: AsRef<Path>>(path: P) -> Target {
+    let lib_path = path
+        .as_ref()
+        .join("dependencies/worker_sdk/lib/windows")
+        .to_str()
+        .expect("Can't convert path to string")
+        .to_string();
+    println!("cargo:rustc-link-search={}", lib_path);
+    println!("cargo:rustc-link-lib=zlibstatic");
+    println!("cargo:rustc-link-lib=improbable_worker");
+    println!("cargo:rustc-link-lib=ssl");
+    println!("cargo:rustc-link-lib=RakNetLibStatic");
     Target {
-        path: path
-            .as_ref()
-            .join("dependencies/worker_sdk/lib/linux")
-            .to_str()
-            .expect("Can't convert path to string")
-            .to_string(),
+        path: lib_path,
         r#type: "worker_sdk".to_string(),
         packages: vec![Package {
             name: "c-static-x86_64-gcc510-linux".to_string(),
