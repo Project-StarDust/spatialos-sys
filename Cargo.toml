@@ -1,0 +1,19 @@
+[package]
+name = "spatialos-sys"
+version = "0.0.1"
+authors = ["Thomas Nicollet <thomas.nicollet@epitech.eu>"]
+edition = "2018"
+homepage = "https://github.com/Project-StarDust/spatialos-sys"
+repository = "https://github.com/Project-StarDust/spatialos-sys"
+description = "System crate used to link with SpatialOs libraries"
+license = "GPL-3.0-or-later"
+readme = "README.md"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+[build-dependencies]
+bindgen = "0.53.1"
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
