@@ -167,6 +167,7 @@ fn generate_bindings<P: AsRef<Path> + Clone>(path: P) {
                     .expect("Can't convert path to utf-8")
                     .to_string(),
             )
+            .rustified_enum("*")
             .parse_callbacks(Box::new(bindgen::CargoCallbacks))
             .generate()
             .expect("Unable to generate bindings");
