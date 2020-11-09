@@ -5,8 +5,6 @@ pub mod op;
 
 use crate::ffi::*;
 use std::ffi::CStr;
-use std::mem::size_of;
-use std::os::raw::c_char;
 
 pub type EntityId = i64;
 pub type ComponentId = u32;
@@ -299,7 +297,7 @@ impl From<Worker_WorkerAttributes> for WorkerAttributes {
                 loop {
                     let char_ptr = worker_attributes
                         .attributes
-                        .offset(index * size_of::<*const c_char>() as isize);
+                        .offset(index);
                     if (*char_ptr).is_null() {
                         break;
                     } else {

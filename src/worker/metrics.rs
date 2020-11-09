@@ -1,6 +1,5 @@
 use crate::ffi::*;
 use std::ffi::CStr;
-use std::mem::size_of;
 
 #[derive(Debug)]
 pub struct HistogramMetricBucket {
@@ -37,7 +36,7 @@ impl From<Worker_HistogramMetric> for HistogramMetric {
             for index in 0..metric.bucket_count {
                 let bucket_ptr = metric
                     .buckets
-                    .offset(index as isize * size_of::<Worker_HistogramMetricBucket>() as isize);
+                    .offset(index as isize as isize);
                 buckets.push(HistogramMetricBucket::from(*bucket_ptr))
             }
             buckets

@@ -8,7 +8,6 @@ use crate::worker::RequestId;
 use crate::worker::StatusCode;
 use crate::worker::WorkerAttributes;
 use std::ffi::CStr;
-use std::mem::size_of;
 
 use crate::ffi::*;
 
