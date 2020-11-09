@@ -144,7 +144,7 @@ fn get_packages<P: AsRef<Path> + Clone>(path: P) -> std::io::Result<std::process
         .output()
 }
 
-fn generate_bindings<P: AsRef<Path> + Clone>(path: P) {
+fn generate_bindings<P: AsRef<Path> + Clone>(path: P, target: &str) {
     if let Err(e) = get_packages(path.clone()) {
         if let ErrorKind::NotFound = e.kind() {
             panic!("`spatial` was not found. Check your PATH.")
@@ -152,6 +152,7 @@ fn generate_bindings<P: AsRef<Path> + Clone>(path: P) {
             panic!("An error occured: {:?}", e)
         }
     } else {
+        let target = format!("--target={}", target);
         let bindings = bindgen::Builder::default()
             .header(
                 path.clone()
@@ -177,6 +178,9 @@ fn generate_bindings<P: AsRef<Path> + Clone>(path: P) {
                     .expect("Can't convert path to utf-8")
                     .to_string(),
             )
+            .clang_args(&[
+                &target
+            ])
             .rustified_enum("*")
             .parse_callbacks(Box::new(bindgen::CargoCallbacks))
             .generate()
@@ -188,10 +192,7 @@ fn generate_bindings<P: AsRef<Path> + Clone>(path: P) {
 }
 
 fn main() {
-    println!(
-        "cargo:rustc-env=TARGET={}",
-        std::env::var("CARGO_CFG_TARGET_OS").unwrap()
-    );
+    let target = std::env::var("TARGET").expect("Unable to get target");
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    generate_bindings(out_path);
+    generate_bindings(out_path, &target);
 }
