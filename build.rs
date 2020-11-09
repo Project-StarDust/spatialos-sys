@@ -88,20 +88,21 @@ fn generate_lib_package<P: AsRef<Path>>(path: P) -> Target {
 fn generate_lib_package<P: AsRef<Path>>(path: P) -> Target {
     let lib_path = path
         .as_ref()
-        .join("dependencies/worker_sdk/lib/windows")
+        .join("dependencies/worker_sdk/lib/linux")
         .to_str()
         .expect("Can't convert path to string")
         .to_string();
     println!("cargo:rustc-link-search={}", lib_path);
-    println!("cargo:rustc-link-lib=zlibstatic");
+    println!("cargo:rustc-link-lib=z");
     println!("cargo:rustc-link-lib=improbable_worker");
     println!("cargo:rustc-link-lib=ssl");
     println!("cargo:rustc-link-lib=RakNetLibStatic");
+    println!("cargo:rustc-link-lib=stdc++");
     Target {
         path: lib_path,
         r#type: "worker_sdk".to_string(),
         packages: vec![Package {
-            name: "c-static-x86_64-gcc510-linux".to_string(),
+            name: "c-static-x86_64-gcc510_pic-linux".to_string(),
         }],
     }
 }
