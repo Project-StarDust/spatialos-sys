@@ -40,8 +40,7 @@ fn generate_c_headers_package<P: AsRef<Path>>(path: P) -> Target {
     }
 }
 
-#[cfg(target_os = "windows")]
-fn generate_lib_package<P: AsRef<Path>>(path: P) -> Target {
+fn generate_lib_package_windows<P: AsRef<Path>>(path: P) -> Target {
     let lib_path = path
         .as_ref()
         .join("dependencies/worker_sdk/lib/windows")
@@ -62,8 +61,7 @@ fn generate_lib_package<P: AsRef<Path>>(path: P) -> Target {
     }
 }
 
-#[cfg(target_os = "macos")]
-fn generate_lib_package<P: AsRef<Path>>(path: P) -> Target {
+fn generate_lib_package_macos<P: AsRef<Path>>(path: P) -> Target {
     let lib_path = path
         .as_ref()
         .join("dependencies/worker_sdk/lib/windows")
@@ -84,8 +82,7 @@ fn generate_lib_package<P: AsRef<Path>>(path: P) -> Target {
     }
 }
 
-#[cfg(target_os = "linux")]
-fn generate_lib_package<P: AsRef<Path>>(path: P) -> Target {
+fn generate_lib_package_linux<P: AsRef<Path>>(path: P) -> Target {
     let lib_path = path
         .as_ref()
         .join("dependencies/worker_sdk/lib/linux")
@@ -104,6 +101,18 @@ fn generate_lib_package<P: AsRef<Path>>(path: P) -> Target {
         packages: vec![Package {
             name: "c-static-x86_64-gcc510_pic-linux".to_string(),
         }],
+    }
+}
+
+fn generate_lib_package<P: AsRef<Path>>(path: P) -> Target {
+    let target_os = env::var("CARGO_CFG_TARGET_OS");
+    match target_os.as_ref().map(|x| &**x) {
+        Ok("linux") | Ok("android") => generate_lib_package_linux(path),
+        Ok("openbsd") | Ok("bitrig") | Ok("netbsd") | Ok("macos") | Ok("ios") => {
+            generate_lib_package_macos(path)
+        }
+        Ok("windows") => generate_lib_package_windows(path),
+        tos => panic!("Unknown OS: {:?}!", tos),
     }
 }
 
@@ -179,6 +188,10 @@ fn generate_bindings<P: AsRef<Path> + Clone>(path: P) {
 }
 
 fn main() {
+    println!(
+        "cargo:rustc-env=TARGET={}",
+        std::env::var("CARGO_CFG_TARGET_OS").unwrap()
+    );
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     generate_bindings(out_path);
 }
