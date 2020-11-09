@@ -93,7 +93,7 @@ impl From<Worker_Metrics> for Metrics {
             for index in 0..metrics.histogram_metric_count {
                 let histogram_metric_ptr = metrics
                     .histogram_metrics
-                    .offset(index as isize * size_of::<Worker_HistogramMetric>() as isize);
+                    .offset(index as isize as isize);
                 histogram_metrics.push(HistogramMetric::from(*histogram_metric_ptr))
             }
             histogram_metrics
@@ -103,7 +103,7 @@ impl From<Worker_Metrics> for Metrics {
             for index in 0..metrics.gauge_metric_count {
                 let gauge_metric_ptr = metrics
                     .gauge_metrics
-                    .offset(index as isize * size_of::<Worker_GaugeMetric>() as isize);
+                    .offset(index as isize as isize);
                 gauge_metrics.push(GaugeMetric::from(*gauge_metric_ptr))
             }
             gauge_metrics
