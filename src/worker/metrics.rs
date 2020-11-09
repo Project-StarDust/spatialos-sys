@@ -2,6 +2,7 @@ use crate::ffi::*;
 use std::ffi::CStr;
 use std::mem::size_of;
 
+#[derive(Debug)]
 pub struct HistogramMetricBucket {
     pub upper_bound: f64,
     pub samples: u32,
@@ -16,6 +17,7 @@ impl From<Worker_HistogramMetricBucket> for HistogramMetricBucket {
     }
 }
 
+#[derive(Debug)]
 pub struct HistogramMetric {
     pub key: String,
     pub sum: f64,
@@ -49,6 +51,7 @@ impl From<Worker_HistogramMetric> for HistogramMetric {
     }
 }
 
+#[derive(Debug)]
 #[doc = " Parameters for a gauge metric."]
 pub struct GaugeMetric {
     pub key: String,
@@ -68,6 +71,7 @@ impl From<Worker_GaugeMetric> for GaugeMetric {
     }
 }
 
+#[derive(Debug)]
 #[doc = " Parameters for sending metrics to SpatialOS."]
 pub struct Metrics {
     #[doc = " The load value of this worker. If NULL, do not report load."]

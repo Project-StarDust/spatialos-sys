@@ -1,6 +1,7 @@
+pub mod connection_parameters;
 pub mod log_message;
-pub mod op;
 pub mod metrics;
+pub mod op;
 
 use crate::ffi::*;
 use std::ffi::CStr;
@@ -11,6 +12,7 @@ pub type EntityId = i64;
 pub type ComponentId = u32;
 pub type RequestId = i64;
 
+#[derive(Debug)]
 #[doc = " Enum defining the severities of log messages that can be sent to SpatialOS and received from the"]
 #[doc = " SDK."]
 pub enum LogLevel {
@@ -36,11 +38,11 @@ impl From<Worker_LogLevel> for LogLevel {
 impl From<u8> for Worker_LogLevel {
     fn from(log_level: u8) -> Self {
         match log_level {
-            1 => Worker_LogLevel::WORKER_LOG_LEVEL_DEBUG,
-            2 => Worker_LogLevel::WORKER_LOG_LEVEL_INFO,
-            3 => Worker_LogLevel::WORKER_LOG_LEVEL_WARN,
-            4 => Worker_LogLevel::WORKER_LOG_LEVEL_ERROR,
-            5 => Worker_LogLevel::WORKER_LOG_LEVEL_FATAL,
+            1 => Self::WORKER_LOG_LEVEL_DEBUG,
+            2 => Self::WORKER_LOG_LEVEL_INFO,
+            3 => Self::WORKER_LOG_LEVEL_WARN,
+            4 => Self::WORKER_LOG_LEVEL_ERROR,
+            5 => Self::WORKER_LOG_LEVEL_FATAL,
             _ => panic!("Invalid byte"),
         }
     }
@@ -52,6 +54,38 @@ impl From<u8> for LogLevel {
     }
 }
 
+impl From<LogLevel> for Worker_LogLevel {
+    fn from(log_level: LogLevel) -> Self {
+        match log_level {
+            LogLevel::Debug => Self::WORKER_LOG_LEVEL_DEBUG,
+            LogLevel::Info => Self::WORKER_LOG_LEVEL_INFO,
+            LogLevel::Warn => Self::WORKER_LOG_LEVEL_WARN,
+            LogLevel::Error => Self::WORKER_LOG_LEVEL_ERROR,
+            LogLevel::Fatal => Self::WORKER_LOG_LEVEL_FATAL,
+        }
+    }
+}
+
+impl From<Worker_LogLevel> for u8 {
+    fn from(log_level: Worker_LogLevel) -> Self {
+        match log_level {
+            Worker_LogLevel::WORKER_LOG_LEVEL_DEBUG => 1,
+            Worker_LogLevel::WORKER_LOG_LEVEL_INFO => 2,
+            Worker_LogLevel::WORKER_LOG_LEVEL_WARN => 3,
+            Worker_LogLevel::WORKER_LOG_LEVEL_ERROR => 4,
+            Worker_LogLevel::WORKER_LOG_LEVEL_FATAL => 5,
+        }
+    }
+}
+
+impl From<LogLevel> for u8 {
+    fn from(log_level: LogLevel) -> Self {
+        let log_level: Worker_LogLevel = log_level.into();
+        log_level.into()
+    }
+}
+
+#[derive(Debug)]
 #[doc = " Enum defining the possible authority states for an entity component."]
 pub enum Authority {
     NotAuthoritative,
@@ -74,9 +108,9 @@ impl From<Worker_Authority> for Authority {
 impl From<u8> for Worker_Authority {
     fn from(authority: u8) -> Self {
         match authority {
-            0 => Worker_Authority::WORKER_AUTHORITY_NOT_AUTHORITATIVE,
-            1 => Worker_Authority::WORKER_AUTHORITY_AUTHORITATIVE,
-            2 => Worker_Authority::WORKER_AUTHORITY_AUTHORITY_LOSS_IMMINENT,
+            0 => Self::WORKER_AUTHORITY_NOT_AUTHORITATIVE,
+            1 => Self::WORKER_AUTHORITY_AUTHORITATIVE,
+            2 => Self::WORKER_AUTHORITY_AUTHORITY_LOSS_IMMINENT,
             _ => panic!("Invalid byte"),
         }
     }
@@ -88,16 +122,7 @@ impl From<u8> for Authority {
     }
 }
 
-pub enum Worker_StatusCode {
-    WORKER_STATUS_CODE_SUCCESS,
-    WORKER_STATUS_CODE_TIMEOUT,
-    WORKER_STATUS_CODE_NOT_FOUND,
-    WORKER_STATUS_CODE_AUTHORITY_LOST,
-    WORKER_STATUS_CODE_PERMISSION_DENIED,
-    WORKER_STATUS_CODE_APPLICATION_ERROR,
-    WORKER_STATUS_CODE_INTERNAL_ERROR,
-}
-
+#[derive(Debug)]
 #[doc = " Enum defining possible command status codes."]
 pub enum StatusCode {
     #[doc = " The request was successfully executed and returned a response."]
@@ -140,8 +165,8 @@ impl From<Worker_StatusCode> for StatusCode {
             Worker_StatusCode::WORKER_STATUS_CODE_NOT_FOUND => Self::NotFound,
             Worker_StatusCode::WORKER_STATUS_CODE_AUTHORITY_LOST => Self::AuthorityLost,
             Worker_StatusCode::WORKER_STATUS_CODE_PERMISSION_DENIED => Self::PermissionDenied,
-            Worker_StatusCode::WORKER_STATUS_CODE_APPLICATION_ERROR  => Self::ApplicationError,
-            Worker_StatusCode::WORKER_STATUS_CODE_INTERNAL_ERROR  => Self::InternalError,
+            Worker_StatusCode::WORKER_STATUS_CODE_APPLICATION_ERROR => Self::ApplicationError,
+            Worker_StatusCode::WORKER_STATUS_CODE_INTERNAL_ERROR => Self::InternalError,
         }
     }
 }
@@ -149,13 +174,13 @@ impl From<Worker_StatusCode> for StatusCode {
 impl From<u8> for Worker_StatusCode {
     fn from(status_code: u8) -> Self {
         match status_code {
-            1 => Worker_StatusCode::WORKER_STATUS_CODE_SUCCESS,
-            2 => Worker_StatusCode::WORKER_STATUS_CODE_TIMEOUT,
-            3 => Worker_StatusCode::WORKER_STATUS_CODE_NOT_FOUND,
-            4 => Worker_StatusCode::WORKER_STATUS_CODE_AUTHORITY_LOST,
-            5 => Worker_StatusCode::WORKER_STATUS_CODE_PERMISSION_DENIED,
-            6 => Worker_StatusCode::WORKER_STATUS_CODE_APPLICATION_ERROR,
-            7 => Worker_StatusCode::WORKER_STATUS_CODE_INTERNAL_ERROR,
+            1 => Self::WORKER_STATUS_CODE_SUCCESS,
+            2 => Self::WORKER_STATUS_CODE_TIMEOUT,
+            3 => Self::WORKER_STATUS_CODE_NOT_FOUND,
+            4 => Self::WORKER_STATUS_CODE_AUTHORITY_LOST,
+            5 => Self::WORKER_STATUS_CODE_PERMISSION_DENIED,
+            6 => Self::WORKER_STATUS_CODE_APPLICATION_ERROR,
+            7 => Self::WORKER_STATUS_CODE_INTERNAL_ERROR,
             _ => panic!("Invalid byte"),
         }
     }
@@ -167,6 +192,91 @@ impl From<u8> for StatusCode {
     }
 }
 
+#[derive(Debug)]
+#[doc = " Possible status codes for a remote call, connection attempt, or connection migration attempt."]
+pub enum ConnectionStatusCode {
+    #[doc = " The remote call was successful, or we are successfully connected."]
+    Success,
+    #[doc = " Protocol violation, or some part of the system otherwise behaved in an unexpected way. Not"]
+    #[doc = " expected to occur in normal operation."]
+    InternalError,
+    #[doc = " An argument provided by the caller was determined to be invalid. This is a local failure; no"]
+    #[doc = " actual attempt was made to contact the host. Not retryable."]
+    InvalidArgument,
+    #[doc = " Failed due to a networking issue or otherwise unreachable host."]
+    NetworkError,
+    #[doc = " A timeout provided by the caller or enforced by the system was exceeded. Can be retried."]
+    Timeout,
+    #[doc = " Attempt was cancelled by the caller. Currently shouldn't happen; reserved for future use."]
+    Cancelled,
+    #[doc = " Made contact with the host, but the request was explicitly rejected. Unlikely to be retryable."]
+    #[doc = " Possible causes include: the request was made to the wrong host; the host considered the"]
+    #[doc = " request invalid for some other reason."]
+    Rejected,
+    #[doc = " The player identity token provided by the caller has expired. Generate a new one and retry."]
+    PlayerIdentityTokenExpired,
+    #[doc = " The login token provided by the caller has expired. Generate a new one and retry."]
+    LoginTokenExpired,
+    #[doc = " Failed because the deployment associated with the provided login token was at capacity."]
+    #[doc = " Retryable."]
+    CapacityExceeded,
+    #[doc = " Failed due to rate-limiting of new connections to the deployment associated with the provided"]
+    #[doc = " login token. Retryable."]
+    RateExceeded,
+    #[doc = " After a successful connection attempt, the server later explicitly terminated the connection."]
+    #[doc = " Possible causes include: the deployment was stopped; the worker was killed due to"]
+    #[doc = " unresponsiveness."]
+    ServerShutdown,
+}
+
+impl From<Worker_ConnectionStatusCode> for ConnectionStatusCode {
+    fn from(status_code: Worker_ConnectionStatusCode) -> Self {
+        match status_code {
+            Worker_ConnectionStatusCode::WORKER_CONNECTION_STATUS_CODE_SUCCESS => Self::Success,
+            Worker_ConnectionStatusCode::WORKER_CONNECTION_STATUS_CODE_INTERNAL_ERROR => Self::InternalError,
+            Worker_ConnectionStatusCode::WORKER_CONNECTION_STATUS_CODE_INVALID_ARGUMENT => Self::InvalidArgument,
+            Worker_ConnectionStatusCode::WORKER_CONNECTION_STATUS_CODE_NETWORK_ERROR => Self::NetworkError,
+            Worker_ConnectionStatusCode::WORKER_CONNECTION_STATUS_CODE_TIMEOUT => Self::Timeout,
+            Worker_ConnectionStatusCode::WORKER_CONNECTION_STATUS_CODE_CANCELLED => Self::Cancelled,
+            Worker_ConnectionStatusCode::WORKER_CONNECTION_STATUS_CODE_REJECTED => Self::Rejected,
+            Worker_ConnectionStatusCode::WORKER_CONNECTION_STATUS_CODE_PLAYER_IDENTITY_TOKEN_EXPIRED => {
+                Self::PlayerIdentityTokenExpired
+            }
+            Worker_ConnectionStatusCode::WORKER_CONNECTION_STATUS_CODE_LOGIN_TOKEN_EXPIRED => Self::LoginTokenExpired,
+            Worker_ConnectionStatusCode::WORKER_CONNECTION_STATUS_CODE_CAPACITY_EXCEEDED => Self::CapacityExceeded,
+            Worker_ConnectionStatusCode::WORKER_CONNECTION_STATUS_CODE_RATE_EXCEEDED => Self::RateExceeded,
+            Worker_ConnectionStatusCode::WORKER_CONNECTION_STATUS_CODE_SERVER_SHUTDOWN => Self::ServerShutdown,
+        }
+    }
+}
+
+impl From<u8> for Worker_ConnectionStatusCode {
+    fn from(status_code: u8) -> Self {
+        match status_code {
+            1 => Self::WORKER_CONNECTION_STATUS_CODE_SUCCESS,
+            2 => Self::WORKER_CONNECTION_STATUS_CODE_INTERNAL_ERROR,
+            3 => Self::WORKER_CONNECTION_STATUS_CODE_INVALID_ARGUMENT,
+            4 => Self::WORKER_CONNECTION_STATUS_CODE_NETWORK_ERROR,
+            5 => Self::WORKER_CONNECTION_STATUS_CODE_TIMEOUT,
+            6 => Self::WORKER_CONNECTION_STATUS_CODE_CANCELLED,
+            7 => Self::WORKER_CONNECTION_STATUS_CODE_REJECTED,
+            8 => Self::WORKER_CONNECTION_STATUS_CODE_PLAYER_IDENTITY_TOKEN_EXPIRED,
+            9 => Self::WORKER_CONNECTION_STATUS_CODE_LOGIN_TOKEN_EXPIRED,
+            10 => Self::WORKER_CONNECTION_STATUS_CODE_CAPACITY_EXCEEDED,
+            11 => Self::WORKER_CONNECTION_STATUS_CODE_RATE_EXCEEDED,
+            12 => Self::WORKER_CONNECTION_STATUS_CODE_SERVER_SHUTDOWN,
+            _ => panic!("Invalid byte"),
+        }
+    }
+}
+
+impl From<u8> for ConnectionStatusCode {
+    fn from(status_code: u8) -> Self {
+        ConnectionStatusCode::from(Worker_ConnectionStatusCode::from(status_code))
+    }
+}
+
+#[derive(Debug)]
 #[doc = " Worker attributes that are part of a worker's runtime configuration."]
 pub struct WorkerAttributes {
     #[doc = " Number of worker attributes."]

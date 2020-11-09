@@ -1,14 +1,45 @@
 use crate::worker::metrics::Metrics;
 use crate::worker::Authority;
 use crate::worker::ComponentId;
+use crate::worker::ConnectionStatusCode;
 use crate::worker::EntityId;
 use crate::worker::LogLevel;
 use crate::worker::RequestId;
 use crate::worker::StatusCode;
 use crate::worker::WorkerAttributes;
 use std::ffi::CStr;
+use std::mem::size_of;
 
 use crate::ffi::*;
+
+#[doc = " An op list, usually returned by Connectio::get_op_list."]
+pub struct OpList {
+    pub ops: Vec<WorkerOp>,
+    inner: *mut Worker_OpList,
+}
+
+impl From<*mut Worker_OpList> for OpList {
+    fn from(op_list: *mut Worker_OpList) -> Self {
+        let ops = unsafe {
+            let mut ops = Vec::new();
+            for index in 0..(*op_list).op_count as isize {
+                let op_ptr = (*op_list).ops.offset(index as isize);
+                ops.push(WorkerOp::from(*op_ptr));
+            }
+            ops
+        };
+        Self {
+            ops,
+            inner: op_list,
+        }
+    }
+}
+
+impl Drop for OpList {
+    fn drop(&mut self) {
+        unsafe { Worker_OpList_Destroy(self.inner) }
+    }
+}
 
 impl From<u8> for Worker_OpType {
     fn from(data: u8) -> Self {
@@ -30,11 +61,12 @@ impl From<u8> for Worker_OpType {
             15 => Self::WORKER_OP_TYPE_COMPONENT_UPDATE,
             16 => Self::WORKER_OP_TYPE_COMMAND_REQUEST,
             17 => Self::WORKER_OP_TYPE_COMMAND_RESPONSE,
-            _ => panic!("Invalid byte"),
+            _ => panic!("Invalid byte: {}", data),
         }
     }
 }
 
+#[derive(Debug)]
 #[doc = " Data for a single op contained within an op list."]
 pub enum WorkerOp {
     Disconnect(DisconnectOp),
@@ -122,8 +154,12 @@ impl From<Worker_Op> for WorkerOp {
     }
 }
 
+#[derive(Debug)]
+#[doc = " Data for a disconnect message from the SDK."]
 pub struct DisconnectOp {
-    pub status_code: u8,
+    #[doc = " A value from the Worker_ConnectionStatusCode enumeration."]
+    pub status_code: ConnectionStatusCode,
+    #[doc = " A string giving detailed information on the reason for disconnecting."]
     pub reason: String,
 }
 
@@ -134,14 +170,20 @@ impl From<Worker_DisconnectOp> for DisconnectOp {
             .map(|s| s.to_owned())
             .unwrap();
         Self {
-            status_code: op.connection_status_code,
+            status_code: ConnectionStatusCode::from(op.connection_status_code),
             reason,
         }
     }
 }
 
+#[derive(Debug)]
+#[doc = " Data for a log message from the SDK."]
+#[doc = " Note: Worker_LogMessageOp has been deprecated and will be removed in a future version of"]
+#[doc = " SpatialOS."]
 pub struct LogMessageOp {
+    #[doc = " The severity of the log message; defined in the LogLevel enumeration."]
     pub level: LogLevel,
+    #[doc = " The message."]
     pub message: String,
 }
 
@@ -158,8 +200,13 @@ impl From<Worker_LogMessageOp> for LogMessageOp {
     }
 }
 
+#[derive(Debug)]
+#[doc = " Data for an AddComponent operation."]
 pub struct AddComponentOp {
+    #[doc = " The ID of the entity for which a component was added."]
     pub entity_id: EntityId,
+    #[doc = " The initial data for the new component. Deserialized with the corresponding vtable deserialize"]
+    #[doc = " function and freed with the vtable free function when the OpList is destroyed."]
     pub data: Worker_ComponentData,
 }
 
@@ -172,7 +219,10 @@ impl From<Worker_AddComponentOp> for AddComponentOp {
     }
 }
 
+#[derive(Debug)]
+#[doc = " Data for an AddEntity operation."]
 pub struct AddEntityOp {
+    #[doc = " The ID of the entity that was added to the worker's view of the simulation."]
     pub entity_id: EntityId,
 }
 
@@ -184,9 +234,14 @@ impl From<Worker_AddEntityOp> for AddEntityOp {
     }
 }
 
+#[derive(Debug)]
+#[doc = " Data for an AuthorityChange operation."]
 pub struct AuthorityChangeOp {
+    #[doc = " The ID of the entity for which there was an authority change."]
     pub entity_id: EntityId,
+    #[doc = " The ID of the component over which the worker's authority has changed."]
     pub component_id: ComponentId,
+    #[doc = " The authority state of the component, using the Authority enumeration."]
     pub authority: Authority,
 }
 
@@ -200,6 +255,7 @@ impl From<Worker_AuthorityChangeOp> for AuthorityChangeOp {
     }
 }
 
+#[derive(Debug)]
 #[doc = " Data for a CommandRequest operation."]
 pub struct CommandRequestOp {
     #[doc = " The incoming command request ID."]
@@ -234,6 +290,7 @@ impl From<Worker_CommandRequestOp> for CommandRequestOp {
     }
 }
 
+#[derive(Debug)]
 #[doc = " Data for a CommandResponse operation."]
 pub struct CommandResponseOp {
     #[doc = " The ID of the command request for which there was a command response."]
@@ -265,6 +322,7 @@ impl From<Worker_CommandResponseOp> for CommandResponseOp {
     }
 }
 
+#[derive(Debug)]
 #[doc = " Data for a ComponentUpdate operation."]
 pub struct ComponentUpdateOp {
     #[doc = " The ID of the entity for which there was a component update."]
@@ -283,6 +341,7 @@ impl From<Worker_ComponentUpdateOp> for ComponentUpdateOp {
     }
 }
 
+#[derive(Debug)]
 #[doc = " Data for a CreateEntity operation."]
 pub struct CreateEntityResponseOp {
     #[doc = " The ID of the request for which there was a response."]
@@ -310,6 +369,7 @@ impl From<Worker_CreateEntityResponseOp> for CreateEntityResponseOp {
     }
 }
 
+#[derive(Debug)]
 #[doc = " Data for a critical section boundary (enter or leave) operation."]
 pub struct CriticalSectionOp {
     #[doc = " Whether the protocol is entering a critical section (true) or leaving it (false)."]
@@ -328,6 +388,7 @@ impl From<Worker_CriticalSectionOp> for CriticalSectionOp {
     }
 }
 
+#[derive(Debug)]
 #[doc = " Data for a DeleteEntity operation."]
 pub struct DeleteEntityResponseOp {
     #[doc = " The ID of the delete entity request for which there was a command response."]
@@ -355,6 +416,7 @@ impl From<Worker_DeleteEntityResponseOp> for DeleteEntityResponseOp {
     }
 }
 
+#[derive(Debug)]
 #[doc = " A response indicating the result of an entity query request."]
 pub struct EntityQueryResponseOp {
     #[doc = " The ID of the entity query request for which there was a response."]
@@ -388,6 +450,7 @@ impl From<Worker_EntityQueryResponseOp> for EntityQueryResponseOp {
     }
 }
 
+#[derive(Debug)]
 #[doc = " Data for a FlagUpdate operation."]
 pub struct FlagUpdateOp {
     #[doc = " The name of the updated worker flag."]
@@ -418,6 +481,7 @@ impl From<Worker_FlagUpdateOp> for FlagUpdateOp {
     }
 }
 
+#[derive(Debug)]
 #[doc = " Data for a set of built-in metrics reported by the SDK."]
 pub struct MetricsOp {
     pub metrics: Metrics,
@@ -431,6 +495,7 @@ impl From<Worker_MetricsOp> for MetricsOp {
     }
 }
 
+#[derive(Debug)]
 #[doc = " Data for a RemoveComponent operation."]
 pub struct RemoveComponentOp {
     #[doc = " The ID of the entity for which a component was removed."]
@@ -448,6 +513,7 @@ impl From<Worker_RemoveComponentOp> for RemoveComponentOp {
     }
 }
 
+#[derive(Debug)]
 #[doc = " Data for a RemoveEntity operation."]
 pub struct RemoveEntityOp {
     #[doc = " The ID of the entity that was removed from the worker's view of the simulation."]
@@ -462,6 +528,7 @@ impl From<Worker_RemoveEntityOp> for RemoveEntityOp {
     }
 }
 
+#[derive(Debug)]
 #[doc = " Data for a ReserveEntityIdsResponse operation."]
 pub struct ReserveEntityIdsResponseOp {
     #[doc = " The ID of the reserve entity ID request for which there was a response."]
