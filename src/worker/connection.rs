@@ -1,6 +1,8 @@
 use crate::ffi::*;
 use crate::worker::log_message::LogMessage;
 use crate::worker::op::OpList;
+use crate::worker::EntityQuery;
+use crate::worker::RequestId;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 
@@ -461,6 +463,34 @@ impl Connection {
     #[doc = " could occur."]
     pub fn get_op_list(&mut self, timeout_millis: u32) -> OpList {
         OpList::from(unsafe { Worker_Connection_GetOpList(self.inner, timeout_millis) })
+    }
+
+    #[doc = " Queries SpatialOS for entity data."]
+    #[doc = ""]
+    #[doc = " Returns RequestId -1 if the query constraint or result type are not valid."]
+    pub fn send_entity_query_request(
+        &mut self,
+        entity_query: EntityQuery,
+        timeout_millis: Option<u32>,
+    ) -> RequestId {
+        let query: Worker_EntityQuery = entity_query.into();
+        if let Some(timeout_millis) = timeout_millis {
+            unsafe {
+                Worker_Connection_SendEntityQueryRequest(
+                    self.inner,
+                    &query as *const Worker_EntityQuery,
+                    &timeout_millis as *const u32,
+                )
+            }
+        } else {
+            unsafe {
+                Worker_Connection_SendEntityQueryRequest(
+                    self.inner,
+                    &query as *const Worker_EntityQuery,
+                    std::ptr::null(),
+                )
+            }
+        }
     }
 }
 

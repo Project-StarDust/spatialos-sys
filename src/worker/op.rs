@@ -1,7 +1,9 @@
+use crate::const_to_vector;
 use crate::worker::metrics::Metrics;
 use crate::worker::Authority;
 use crate::worker::ComponentId;
 use crate::worker::ConnectionStatusCode;
+use crate::worker::Entity;
 use crate::worker::EntityId;
 use crate::worker::LogLevel;
 use crate::worker::RequestId;
@@ -430,7 +432,7 @@ pub struct EntityQueryResponseOp {
     #[doc = " Array of entities in the result set. Will be NULL if the query was a count query. Snapshot data"]
     #[doc = " in the result is deserialized with the corresponding vtable deserialize function and freed with"]
     #[doc = " the vtable free function when the OpList is destroyed."]
-    pub results: *const Worker_Entity,
+    pub results: Vec<Entity>,
 }
 
 impl From<Worker_EntityQueryResponseOp> for EntityQueryResponseOp {
@@ -439,11 +441,15 @@ impl From<Worker_EntityQueryResponseOp> for EntityQueryResponseOp {
             .to_str()
             .map(|s| s.to_owned())
             .unwrap();
+        let results = const_to_vector(op.results, op.result_count as isize)
+            .into_iter()
+            .map(|e| e.into())
+            .collect();
         Self {
             request_id: op.request_id,
             status_code: StatusCode::from(op.status_code),
             result_count: op.result_count,
-            results: op.results,
+            results,
             message,
         }
     }

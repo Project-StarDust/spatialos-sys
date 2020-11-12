@@ -137,6 +137,7 @@ fn get_packages<P: AsRef<Path> + Clone>(path: P) -> std::io::Result<std::process
     Command::new("spatial")
         .arg("package")
         .arg("unpack")
+        .arg("--force")
         .arg("--log_directory")
         .arg(path.clone().as_ref().join("logs"))
         .arg("--package_file")

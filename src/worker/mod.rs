@@ -1,14 +1,25 @@
-pub mod connection_parameters;
+pub mod component_vtable;
+pub mod connection;
+pub mod constraint;
 pub mod log_message;
 pub mod metrics;
 pub mod op;
 
 use crate::ffi::*;
+use crate::worker::constraint::Constraint;
+use crate::worker::constraint::EntityIdConstraint;
 use std::ffi::CStr;
+use std::os::raw::c_void;
 
 pub type EntityId = i64;
 pub type ComponentId = u32;
 pub type RequestId = i64;
+pub type CommandIndex = u32;
+
+pub type CommandRequestHandle = c_void;
+pub type CommandResponseHandle = c_void;
+pub type ComponentDataHandle = c_void;
+pub type ComponentUpdateHandle = c_void;
 
 #[derive(Debug)]
 #[doc = " Enum defining the severities of log messages that can be sent to SpatialOS and received from the"]
@@ -295,9 +306,7 @@ impl From<Worker_WorkerAttributes> for WorkerAttributes {
                 let index = 0;
                 let mut attributes = Vec::new();
                 loop {
-                    let char_ptr = worker_attributes
-                        .attributes
-                        .offset(index);
+                    let char_ptr = worker_attributes.attributes.offset(index);
                     if (*char_ptr).is_null() {
                         break;
                     } else {
@@ -314,6 +323,145 @@ impl From<Worker_WorkerAttributes> for WorkerAttributes {
                 attribute_count: worker_attributes.attribute_count,
                 attributes,
             }
+        }
+    }
+}
+
+pub enum ResultType {
+    Count,
+    Snapshot,
+}
+
+impl From<u8> for Worker_ResultType {
+    fn from(result_type: u8) -> Self {
+        match result_type {
+            1 => Self::WORKER_RESULT_TYPE_COUNT,
+            2 => Self::WORKER_RESULT_TYPE_SNAPSHOT,
+            _ => panic!("Invalid byte"),
+        }
+    }
+}
+
+impl From<Worker_ResultType> for ResultType {
+    fn from(result_type: Worker_ResultType) -> Self {
+        match result_type {
+            Worker_ResultType::WORKER_RESULT_TYPE_COUNT => Self::Count,
+            Worker_ResultType::WORKER_RESULT_TYPE_SNAPSHOT => Self::Snapshot,
+        }
+    }
+}
+
+impl From<u8> for ResultType {
+    fn from(result_type: u8) -> Self {
+        ResultType::from(Worker_ResultType::from(result_type))
+    }
+}
+
+impl From<Worker_ResultType> for u8 {
+    fn from(result_type: Worker_ResultType) -> Self {
+        match result_type {
+            Worker_ResultType::WORKER_RESULT_TYPE_COUNT => 1,
+            Worker_ResultType::WORKER_RESULT_TYPE_SNAPSHOT => 2,
+        }
+    }
+}
+
+impl From<ResultType> for Worker_ResultType {
+    fn from(result_type: ResultType) -> Self {
+        match result_type {
+            ResultType::Count => Self::WORKER_RESULT_TYPE_COUNT,
+            ResultType::Snapshot => Self::WORKER_RESULT_TYPE_SNAPSHOT,
+        }
+    }
+}
+
+impl From<ResultType> for u8 {
+    fn from(result_type: ResultType) -> Self {
+        u8::from(Worker_ResultType::from(result_type))
+    }
+}
+
+#[doc = " An entity query."]
+pub struct EntityQuery {
+    #[doc = " The constraint for this query."]
+    pub constraint: Constraint,
+    #[doc = " Result type for this query, using Worker_ResultType."]
+    pub result_type: ResultType,
+    #[doc = " Number of component IDs in the array for a snapshot result type."]
+    pub snapshot_result_type_component_id_count: u32,
+    #[doc = " Pointer to component ID data for a snapshot result type. None means all component IDs."]
+    pub snapshot_result_type_component_ids: Vec<ComponentId>,
+}
+
+impl Default for EntityQuery {
+    fn default() -> Self {
+        Self {
+            constraint: Constraint::EntityId(EntityIdConstraint { entity_id: 0 }),
+            result_type: ResultType::Count,
+            snapshot_result_type_component_id_count: 0,
+            snapshot_result_type_component_ids: Vec::new(),
+        }
+    }
+}
+
+impl From<Worker_EntityQuery> for EntityQuery {
+    fn from(query: Worker_EntityQuery) -> Self {
+        let snapshot_result_type_component_ids =
+            if query.snapshot_result_type_component_ids.is_null() {
+                Vec::new()
+            } else {
+                unsafe {
+                    let mut component_ids = Vec::new();
+                    for index in 0..query.snapshot_result_type_component_id_count {
+                        let component_id_ptr = query
+                            .snapshot_result_type_component_ids
+                            .offset(index as isize);
+                        component_ids.push(*component_id_ptr);
+                    }
+                    component_ids
+                }
+            };
+        Self {
+            constraint: query.constraint.into(),
+            result_type: query.result_type.into(),
+            snapshot_result_type_component_id_count: query.snapshot_result_type_component_id_count,
+            snapshot_result_type_component_ids,
+        }
+    }
+}
+
+impl From<EntityQuery> for Worker_EntityQuery {
+    fn from(query: EntityQuery) -> Self {
+        let mut vec = query.snapshot_result_type_component_ids;
+        vec.shrink_to_fit();
+        let vec_ptr = vec.as_mut_ptr();
+        std::mem::forget(vec);
+        Self {
+            constraint: query.constraint.into(),
+            result_type: query.result_type.into(),
+            snapshot_result_type_component_id_count: query.snapshot_result_type_component_id_count,
+            snapshot_result_type_component_ids: vec_ptr,
+        }
+    }
+}
+
+#[doc = " Represents an entity with an ID and a component data snapshot."]
+#[derive(Debug, Clone)]
+pub struct Entity {
+    #[doc = " The ID of the entity."]
+    pub entity_id: Worker_EntityId,
+    #[doc = " Number of components for the entity."]
+    pub component_count: u32,
+    #[doc = " Array of initial component data for the entity."]
+    pub components: *const Worker_ComponentData,
+}
+
+impl From<Worker_Entity> for Entity {
+    fn from(entity: Worker_Entity) -> Self {
+        Self {
+            entity_id: entity.entity_id,
+            component_count: entity.component_count,
+            components: entity.components
         }
     }
 }
