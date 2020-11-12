@@ -5,9 +5,9 @@ pub mod log_message;
 pub mod metrics;
 pub mod op;
 
-use crate::ffi::*;
 use crate::worker::constraint::Constraint;
 use crate::worker::constraint::EntityIdConstraint;
+use crate::{const_to_vector, ffi::*, schema};
 use std::ffi::CStr;
 use std::os::raw::c_void;
 
@@ -453,15 +453,40 @@ pub struct Entity {
     #[doc = " Number of components for the entity."]
     pub component_count: u32,
     #[doc = " Array of initial component data for the entity."]
-    pub components: *const Worker_ComponentData,
+    pub components: Vec<ComponentData>,
 }
 
 impl From<Worker_Entity> for Entity {
     fn from(entity: Worker_Entity) -> Self {
+        let components = const_to_vector(entity.components, entity.component_count as isize)
+            .into_iter()
+            .map(ComponentData::from)
+            .collect();
         Self {
             entity_id: entity.entity_id,
             component_count: entity.component_count,
-            components: entity.components
+            components,
+        }
+    }
+}
+
+#[doc = " An object used to represent a component data snapshot by either raw schema data or some"]
+#[doc = " user-defined handle type."]
+#[derive(Debug, Clone)]
+pub struct ComponentData {
+    pub reserved: *mut c_void,
+    pub component_id: ComponentId,
+    pub schema_type: schema::ComponentData,
+    pub user_handle: *mut ComponentDataHandle,
+}
+
+impl From<Worker_ComponentData> for ComponentData {
+    fn from(data: Worker_ComponentData) -> Self {
+        Self {
+            reserved: data.reserved,
+            component_id: data.component_id,
+            schema_type: data.schema_type.into(),
+            user_handle: data.user_handle,
         }
     }
 }

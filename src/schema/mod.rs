@@ -5,10 +5,12 @@ use crate::ffi::*;
 pub type EntityId = i64;
 pub type FieldId = u32;
 
+#[derive(Debug, Clone)]
 pub struct ComponentData {
     inner: Box<Schema_ComponentData>,
 }
 
+#[derive(Debug, Clone)]
 pub struct ComponentUpdate {
     inner: Box<Schema_ComponentUpdate>,
 }
