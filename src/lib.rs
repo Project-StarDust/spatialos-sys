@@ -37,17 +37,20 @@ pub(crate) use ffi::{
 
 #[allow(unused_imports)]
 pub(crate) use ffi::{
-    Schema_AddBool, Schema_AddDouble, Schema_AddEntityId, Schema_AddFixed32, Schema_AddFixed64,
-    Schema_AddFloat, Schema_AddInt32, Schema_AddInt64, Schema_AddObject, Schema_AddSfixed32,
-    Schema_AddSfixed64, Schema_AddSint32, Schema_AddSint64, Schema_AddUint32, Schema_AddUint64,
-    Schema_CreateComponentData, Schema_CreateComponentUpdate, Schema_GetBool,
-    Schema_GetComponentDataFields, Schema_GetComponentUpdateFields, Schema_GetDouble,
+    Schema_AddBool, Schema_AddBytes, Schema_AddDouble, Schema_AddDoubleList, Schema_AddEntityId,
+    Schema_AddFixed32, Schema_AddFixed64, Schema_AddFloat, Schema_AddInt32, Schema_AddInt64,
+    Schema_AddObject, Schema_AddSfixed32, Schema_AddSfixed64, Schema_AddSint32, Schema_AddSint64,
+    Schema_AddUint32, Schema_AddUint64, Schema_AllocateBuffer, Schema_CreateComponentData,
+    Schema_CreateComponentUpdate, Schema_GetBool, Schema_GetBoolCount, Schema_GetBytes,
+    Schema_GetBytesCount, Schema_GetBytesLength, Schema_GetComponentDataFields,
+    Schema_GetComponentUpdateFields, Schema_GetDouble, Schema_GetDoubleCount, Schema_GetDoubleList,
     Schema_GetEntityId, Schema_GetFixed32, Schema_GetFixed64, Schema_GetFloat, Schema_GetInt32,
     Schema_GetInt64, Schema_GetObject, Schema_GetObjectCount, Schema_GetSfixed32,
-    Schema_GetSfixed64, Schema_GetSint32, Schema_GetSint64, Schema_GetUint32, Schema_GetUint64,
+    Schema_GetSfixed64, Schema_GetSint32, Schema_GetSint64, Schema_GetUint32,
+    Schema_GetUint32Count, Schema_GetUint32List, Schema_GetUint64, Schema_IndexBytes,
+    Schema_IndexBytesLength, Schema_IndexObject, SCHEMA_MAP_KEY_FIELD_ID,
+    SCHEMA_MAP_VALUE_FIELD_ID, Schema_AddUint32List
 };
-
-pub use ffi::{Schema_ComponentData, Schema_ComponentUpdate};
 
 #[cfg(target_os = "windows")]
 extern crate gdi32;
