@@ -1,6 +1,6 @@
 [package]
 name = "spatialos-sys"
-version = "0.0.3"
+version = "0.0.4"
 authors = ["Thomas Nicollet <thomas.nicollet@epitech.eu>"]
 edition = "2018"
 homepage = "https://github.com/Project-StarDust/spatialos-sys"
@@ -12,11 +12,11 @@ readme = "README.md"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+bytevec = "0.2.0"
 
 [target.'cfg(windows)'.dependencies]
 user32-sys = "0.1.2"
 gdi32-sys = "0.2.0"
-bytevec = "0.2.0"
 
 [build-dependencies]
 bindgen = "0.53.1"
