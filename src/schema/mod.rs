@@ -54,13 +54,11 @@ impl From<*mut Schema_ComponentData> for ComponentData {
     }
 }
 
-
 impl From<ComponentData> for *mut Schema_ComponentData {
     fn from(data: ComponentData) -> Self {
         Box::into_raw(data.inner)
     }
 }
-
 
 impl From<*mut Schema_ComponentUpdate> for ComponentUpdate {
     fn from(inner: *mut Schema_ComponentUpdate) -> Self {
@@ -68,7 +66,6 @@ impl From<*mut Schema_ComponentUpdate> for ComponentUpdate {
         Self { inner }
     }
 }
-
 
 impl From<ComponentUpdate> for *mut Schema_ComponentUpdate {
     fn from(data: ComponentUpdate) -> Self {

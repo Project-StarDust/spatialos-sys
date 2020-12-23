@@ -179,9 +179,7 @@ fn generate_bindings<P: AsRef<Path> + Clone>(path: P, target: &str) {
                     .expect("Can't convert path to utf-8")
                     .to_string(),
             )
-            .clang_args(&[
-                &target
-            ])
+            .clang_args(&[&target])
             .rustified_enum("*")
             .parse_callbacks(Box::new(bindgen::CargoCallbacks))
             .generate()

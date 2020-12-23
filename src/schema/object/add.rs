@@ -89,4 +89,18 @@ impl Object {
     pub fn add_string<S: AsRef<str>>(&mut self, field_id: FieldId, value: S) {
         self.add_bytes(field_id, value.as_ref().as_bytes())
     }
+
+    pub fn add_enum<E, V>(&mut self, field_id: FieldId, value: E)
+    where
+        for<'a> &'a V: Into<u32>,
+        E: AsRef<V>,
+    {
+        unsafe {
+            Schema_AddEnum(
+                &mut *self.inner as *mut Schema_Object,
+                field_id,
+                value.as_ref().into(),
+            )
+        }
+    }
 }

@@ -36,4 +36,22 @@ impl Object {
             self.add_string(field_id, value)
         }
     }
+
+    pub fn add_enum_list<E>(&mut self, field_id: FieldId, values: &[E])
+    where
+        for<'a> &'a E: Into<u32>,
+    {
+        unsafe {
+            Schema_AddEnumList(
+                &mut *self.inner,
+                field_id,
+                values
+                    .iter()
+                    .map(|e| e.into())
+                    .collect::<Vec<u32>>()
+                    .as_ptr(),
+                values.len() as u32,
+            )
+        }
+    }
 }

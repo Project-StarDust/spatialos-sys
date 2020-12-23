@@ -1,6 +1,6 @@
 use super::Object;
-use crate::{const_to_vector, ffi::*};
 use crate::schema::{EntityId, FieldId};
+use crate::{const_to_vector, ffi::*};
 
 impl Object {
     pub fn get_bool(&self, field_id: FieldId) -> bool {
@@ -80,5 +80,9 @@ impl Object {
         std::str::from_utf8(&self.get_bytes(field_id))
             .unwrap()
             .to_owned()
+    }
+
+    pub fn get_enum<E: From<u32>>(&self, field_id: FieldId) -> E {
+        E::from(unsafe { Schema_GetEnum(&*self.inner as *const Schema_Object, field_id) })
     }
 }

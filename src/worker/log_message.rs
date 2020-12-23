@@ -3,8 +3,6 @@ use crate::worker::LogLevel;
 use std::ffi::CStr;
 use std::ffi::CString;
 
-
-
 use crate::ffi::*;
 
 #[doc = " Parameters for sending a log message to SpatialOS."]

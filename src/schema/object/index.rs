@@ -25,4 +25,8 @@ impl Object {
             .unwrap()
             .to_owned()
     }
+
+    pub fn index_enum<E: From<u32>>(&self, field_id: FieldId, index: u32) -> E {
+        E::from(unsafe { Schema_IndexEnum(&*self.inner as *const Schema_Object, field_id, index) })
+    }
 }

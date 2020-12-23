@@ -34,9 +34,7 @@ impl From<Worker_HistogramMetric> for HistogramMetric {
         let buckets = unsafe {
             let mut buckets = Vec::new();
             for index in 0..metric.bucket_count {
-                let bucket_ptr = metric
-                    .buckets
-                    .offset(index as isize as isize);
+                let bucket_ptr = metric.buckets.offset(index as isize as isize);
                 buckets.push(HistogramMetricBucket::from(*bucket_ptr))
             }
             buckets
@@ -90,9 +88,8 @@ impl From<Worker_Metrics> for Metrics {
         let histogram_metrics = unsafe {
             let mut histogram_metrics = Vec::new();
             for index in 0..metrics.histogram_metric_count {
-                let histogram_metric_ptr = metrics
-                    .histogram_metrics
-                    .offset(index as isize as isize);
+                let histogram_metric_ptr =
+                    metrics.histogram_metrics.offset(index as isize as isize);
                 histogram_metrics.push(HistogramMetric::from(*histogram_metric_ptr))
             }
             histogram_metrics
@@ -100,9 +97,7 @@ impl From<Worker_Metrics> for Metrics {
         let gauge_metrics = unsafe {
             let mut gauge_metrics = Vec::new();
             for index in 0..metrics.gauge_metric_count {
-                let gauge_metric_ptr = metrics
-                    .gauge_metrics
-                    .offset(index as isize as isize);
+                let gauge_metric_ptr = metrics.gauge_metrics.offset(index as isize as isize);
                 gauge_metrics.push(GaugeMetric::from(*gauge_metric_ptr))
             }
             gauge_metrics

@@ -46,7 +46,7 @@ impl Object {
             None
         }
     }
-    
+
     pub fn get_optional_uint32_list(&self, field_id: FieldId) -> Option<Vec<u32>> {
         let count = self.get_uint32_count(field_id);
         if count > 0 {
@@ -71,5 +71,18 @@ impl Object {
         } else {
             None
         }
+    }
+
+    pub fn get_enum_list<E: From<u32>>(&self, field_id: FieldId) -> Vec<E> {
+        let count = self.get_enum_count(field_id);
+        let mut list = Vec::with_capacity(count as usize);
+        unsafe {
+            Schema_GetEnumList(
+                &*self.inner as *const Schema_Object,
+                field_id,
+                list.as_mut_ptr(),
+            )
+        }
+        list.into_iter().map(E::from).collect::<Vec<E>>()
     }
 }
