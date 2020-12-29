@@ -46,11 +46,11 @@ pub(crate) use ffi::{
     Schema_GetBytesLength, Schema_GetComponentDataFields, Schema_GetComponentUpdateFields,
     Schema_GetDouble, Schema_GetDoubleCount, Schema_GetDoubleList, Schema_GetEntityId,
     Schema_GetEnum, Schema_GetEnumCount, Schema_GetEnumList, Schema_GetFixed32, Schema_GetFixed64,
-    Schema_GetFloat, Schema_GetInt32, Schema_GetInt64, Schema_GetObject, Schema_GetObjectCount,
-    Schema_GetSfixed32, Schema_GetSfixed64, Schema_GetSint32, Schema_GetSint64, Schema_GetUint32,
-    Schema_GetUint32Count, Schema_GetUint32List, Schema_GetUint64, Schema_IndexBytes,
-    Schema_IndexBytesLength, Schema_IndexEnum, Schema_IndexObject, SCHEMA_MAP_KEY_FIELD_ID,
-    SCHEMA_MAP_VALUE_FIELD_ID,
+    Schema_GetFloat, Schema_GetInt32, Schema_GetInt64, Schema_GetInt64Count, Schema_GetObject,
+    Schema_GetObjectCount, Schema_GetSfixed32, Schema_GetSfixed64, Schema_GetSint32,
+    Schema_GetSint64, Schema_GetUint32, Schema_GetUint32Count, Schema_GetUint32List,
+    Schema_GetUint64, Schema_IndexBytes, Schema_IndexBytesLength, Schema_IndexEnum,
+    Schema_IndexObject, SCHEMA_MAP_KEY_FIELD_ID, SCHEMA_MAP_VALUE_FIELD_ID, Schema_GetFloatCount
 };
 
 #[cfg(target_os = "windows")]
