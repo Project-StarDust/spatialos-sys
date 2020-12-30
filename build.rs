@@ -1,6 +1,5 @@
 extern crate bindgen;
 
-use serde::Serialize;
 use std::env;
 use std::io::ErrorKind;
 use std::io::Write;
@@ -8,39 +7,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::process::Command;
 
-#[derive(Serialize)]
-struct Package {
-    pub name: String,
-}
-
-#[derive(Serialize)]
-struct Target {
-    pub path: String,
-    pub r#type: String,
-    pub packages: Vec<Package>,
-}
-
-#[derive(Serialize)]
-struct Targets {
-    pub targets: Vec<Target>,
-}
-
-fn generate_c_headers_package<P: AsRef<Path>>(path: P) -> Target {
-    Target {
-        path: path
-            .as_ref()
-            .join("dependencies/worker_sdk/headers")
-            .to_str()
-            .expect("Can't convert path to string")
-            .to_string(),
-        r#type: "worker_sdk".to_string(),
-        packages: vec![Package {
-            name: "c_headers".to_string(),
-        }],
-    }
-}
-
-fn generate_lib_package_windows<P: AsRef<Path>>(path: P) -> Target {
+fn generate_lib_package_windows<P: AsRef<Path>>(path: P) -> (String, String) {
     let lib_path = path
         .as_ref()
         .join("dependencies/worker_sdk/lib/windows")
@@ -52,16 +19,10 @@ fn generate_lib_package_windows<P: AsRef<Path>>(path: P) -> Target {
     println!("cargo:rustc-link-lib=improbable_worker");
     println!("cargo:rustc-link-lib=ssl");
     println!("cargo:rustc-link-lib=RakNetLibStatic");
-    Target {
-        path: lib_path,
-        r#type: "worker_sdk".to_string(),
-        packages: vec![Package {
-            name: "c-static-x86_64-vc141_md-win32".to_string(),
-        }],
-    }
+    (lib_path, "c-static-x86_64-vc141_md-win32".to_string())
 }
 
-fn generate_lib_package_macos<P: AsRef<Path>>(path: P) -> Target {
+fn generate_lib_package_macos<P: AsRef<Path>>(path: P) -> (String, String) {
     let lib_path = path
         .as_ref()
         .join("dependencies/worker_sdk/lib/windows")
@@ -73,16 +34,10 @@ fn generate_lib_package_macos<P: AsRef<Path>>(path: P) -> Target {
     println!("cargo:rustc-link-lib=improbable_worker");
     println!("cargo:rustc-link-lib=ssl");
     println!("cargo:rustc-link-lib=RakNetLibStatic");
-    Target {
-        path: lib_path,
-        r#type: "worker_sdk".to_string(),
-        packages: vec![Package {
-            name: "c-static-x86_64-clang-macos".to_string(),
-        }],
-    }
+    (lib_path, "c-static-x86_64-clang-macos".to_string())
 }
 
-fn generate_lib_package_linux<P: AsRef<Path>>(path: P) -> Target {
+fn generate_lib_package_linux<P: AsRef<Path>>(path: P) -> (String, String) {
     let lib_path = path
         .as_ref()
         .join("dependencies/worker_sdk/lib/linux")
@@ -95,16 +50,10 @@ fn generate_lib_package_linux<P: AsRef<Path>>(path: P) -> Target {
     println!("cargo:rustc-link-lib=ssl");
     println!("cargo:rustc-link-lib=RakNetLibStatic");
     println!("cargo:rustc-link-lib=stdc++");
-    Target {
-        path: lib_path,
-        r#type: "worker_sdk".to_string(),
-        packages: vec![Package {
-            name: "c-static-x86_64-gcc510_pic-linux".to_string(),
-        }],
-    }
+    (lib_path, "c-static-x86_64-gcc510_pic-linux".to_string())
 }
 
-fn generate_lib_package<P: AsRef<Path>>(path: P) -> Target {
+fn generate_lib_package<P: AsRef<Path>>(path: P) -> (String, String) {
     let target_os = env::var("CARGO_CFG_TARGET_OS");
     match target_os.as_ref().map(|x| &**x) {
         Ok("linux") | Ok("android") => generate_lib_package_linux(path),
@@ -116,17 +65,22 @@ fn generate_lib_package<P: AsRef<Path>>(path: P) -> Target {
     }
 }
 
-fn get_targets<P: AsRef<Path> + Clone>(path: P) -> Targets {
-    Targets {
-        targets: vec![
-            generate_c_headers_package(path.clone()),
-            generate_lib_package(path),
-        ],
-    }
+fn get_targets<P: AsRef<Path>>(path: P) -> String {
+    let c_headers_path = path
+        .as_ref()
+        .join("dependencies/worker_sdk/headers")
+        .to_str()
+        .expect("Can't convert path to string")
+        .to_string();
+    let (worker_sdk_path, package_name) = generate_lib_package(path);
+    format!(
+        r#"{{"targets": [{{"path": "{}", "type": "worker_sdk", "packages": [{{"name": "c_headers"}}]}}, {{"path": "{}", "type": "worker_sdk", "packages": [{{"name": "{}"}}]}}]}}"#,
+        c_headers_path, worker_sdk_path, package_name
+    )
 }
 
 fn write_packages<P: AsRef<Path> + Clone>(path: P) -> std::io::Result<()> {
-    let serialized = serde_json::to_string(&get_targets(path.clone())).unwrap();
+    let serialized = get_targets(path.clone());
     let mut file = std::fs::File::create(path.as_ref().join("worker_packages.json"))?;
     file.write_all(serialized.as_bytes())?;
     Ok(())

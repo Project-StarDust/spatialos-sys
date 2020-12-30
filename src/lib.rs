@@ -3,55 +3,7 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 
-pub(crate) mod ffi;
-pub use ffi::*;
-
-#[allow(unused_imports)]
-pub(crate) use ffi::{
-    Worker_AddComponentOp, Worker_AddEntityOp, Worker_AndConstraint, Worker_Authority,
-    Worker_AuthorityChangeOp, Worker_CommandIndex, Worker_CommandRequestCopy,
-    Worker_CommandRequestDeserialize, Worker_CommandRequestFree, Worker_CommandRequestOp,
-    Worker_CommandRequestSerialize, Worker_CommandResponseCopy, Worker_CommandResponseDeserialize,
-    Worker_CommandResponseFree, Worker_CommandResponseHandle, Worker_CommandResponseOp,
-    Worker_CommandResponseSerialize, Worker_ComponentConstraint, Worker_ComponentData,
-    Worker_ComponentDataCopy, Worker_ComponentDataDeserialize, Worker_ComponentDataFree,
-    Worker_ComponentDataHandle, Worker_ComponentDataSerialize, Worker_ComponentId,
-    Worker_ComponentUpdateCopy, Worker_ComponentUpdateDeserialize, Worker_ComponentUpdateFree,
-    Worker_ComponentUpdateHandle, Worker_ComponentUpdateOp, Worker_ComponentUpdateSerialize,
-    Worker_ConnectAsync, Worker_Connection, Worker_ConnectionFuture,
-    Worker_ConnectionFuture_Destroy, Worker_ConnectionFuture_Get, Worker_ConnectionParameters,
-    Worker_ConnectionStatusCode, Worker_Connection_Destroy, Worker_Connection_GetOpList,
-    Worker_Connection_SendEntityQueryRequest, Worker_Connection_SendLogMessage, Worker_Constraint,
-    Worker_ConstraintType, Worker_Constraint_Union, Worker_CreateEntityResponseOp,
-    Worker_CriticalSectionOp, Worker_DefaultConnectionParameters, Worker_DeleteEntityResponseOp,
-    Worker_DisconnectOp, Worker_Entity, Worker_EntityId, Worker_EntityIdConstraint,
-    Worker_EntityQuery, Worker_EntityQueryResponseOp, Worker_FlagUpdateOp, Worker_GaugeMetric,
-    Worker_HistogramMetric, Worker_HistogramMetricBucket, Worker_LogLevel, Worker_LogMessage,
-    Worker_LogMessageOp, Worker_Metrics, Worker_MetricsOp, Worker_ModularKcpNetworkParameters,
-    Worker_NetworkConnectionType, Worker_NetworkParameters, Worker_NetworkSecurityType,
-    Worker_NotConstraint, Worker_Op, Worker_OpList_Destroy, Worker_OpType, Worker_Op_Union,
-    Worker_OrConstraint, Worker_RemoveComponentOp, Worker_RemoveEntityOp, Worker_RequestId,
-    Worker_ReserveEntityIdsResponseOp, Worker_ResultType, Worker_SphereConstraint,
-    Worker_StatusCode, Worker_WorkerAttributes,
-};
-
-#[allow(unused_imports)]
-pub(crate) use ffi::{
-    Schema_AddBool, Schema_AddBytes, Schema_AddDouble, Schema_AddDoubleList, Schema_AddEntityId,
-    Schema_AddEnum, Schema_AddEnumList, Schema_AddFixed32, Schema_AddFixed64, Schema_AddFloat,
-    Schema_AddInt32, Schema_AddInt64, Schema_AddObject, Schema_AddSfixed32, Schema_AddSfixed64,
-    Schema_AddSint32, Schema_AddSint64, Schema_AddUint32, Schema_AddUint32List, Schema_AddUint64,
-    Schema_AllocateBuffer, Schema_CreateComponentData, Schema_CreateComponentUpdate,
-    Schema_GetBool, Schema_GetBoolCount, Schema_GetBytes, Schema_GetBytesCount,
-    Schema_GetBytesLength, Schema_GetComponentDataFields, Schema_GetComponentUpdateFields,
-    Schema_GetDouble, Schema_GetDoubleCount, Schema_GetDoubleList, Schema_GetEntityId,
-    Schema_GetEnum, Schema_GetEnumCount, Schema_GetEnumList, Schema_GetFixed32, Schema_GetFixed64,
-    Schema_GetFloat, Schema_GetInt32, Schema_GetInt64, Schema_GetInt64Count, Schema_GetObject,
-    Schema_GetObjectCount, Schema_GetSfixed32, Schema_GetSfixed64, Schema_GetSint32,
-    Schema_GetSint64, Schema_GetUint32, Schema_GetUint32Count, Schema_GetUint32List,
-    Schema_GetUint64, Schema_IndexBytes, Schema_IndexBytesLength, Schema_IndexEnum,
-    Schema_IndexObject, SCHEMA_MAP_KEY_FIELD_ID, SCHEMA_MAP_VALUE_FIELD_ID, Schema_GetFloatCount
-};
+include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 #[cfg(target_os = "windows")]
 extern crate gdi32;
@@ -59,38 +11,192 @@ extern crate gdi32;
 #[cfg(target_os = "windows")]
 extern crate user32;
 
-pub mod schema;
-pub mod worker;
-
-#[doc = "Test[]"]
-pub fn mut_to_vector<T>(data: *mut T, size: isize) -> Vec<T> {
-    if data.is_null() {
-        Vec::new()
-    } else {
-        let mut datas = Vec::new();
-        for index in 0..size {
-            let data = unsafe {
-                let data_ptr = data.offset(index);
-                Box::from_raw(data_ptr)
-            };
-            datas.push(*data);
+impl From<u8> for Worker_NetworkConnectionType {
+    fn from(connection_type: u8) -> Self {
+        match connection_type {
+            0 => Self::WORKER_NETWORK_CONNECTION_TYPE_TCP,
+            1 => Self::WORKER_NETWORK_CONNECTION_TYPE_RAKNET,
+            2 => Self::WORKER_NETWORK_CONNECTION_TYPE_KCP,
+            3 => Self::WORKER_NETWORK_CONNECTION_TYPE_MODULAR_KCP,
+            4 => Self::WORKER_NETWORK_CONNECTION_TYPE_MODULAR_TCP,
+            _ => panic!("Invalid byte"),
         }
-        datas
     }
 }
 
-pub(crate) fn const_to_vector<T: Clone>(data: *const T, size: isize) -> Vec<T> {
-    if data.is_null() {
-        Vec::new()
-    } else {
-        let mut datas = Vec::new();
-        for index in 0..size {
-            let data = unsafe {
-                let data_ptr = data.offset(index);
-                (*data_ptr).clone()
-            };
-            datas.push(data);
+impl Into<u8> for Worker_NetworkConnectionType {
+    fn into(self) -> u8 {
+        match self {
+            Self::WORKER_NETWORK_CONNECTION_TYPE_TCP => 0,
+            Self::WORKER_NETWORK_CONNECTION_TYPE_RAKNET => 1,
+            Self::WORKER_NETWORK_CONNECTION_TYPE_KCP => 2,
+            Self::WORKER_NETWORK_CONNECTION_TYPE_MODULAR_KCP => 3,
+            Self::WORKER_NETWORK_CONNECTION_TYPE_MODULAR_TCP => 4,
         }
-        datas
+    }
+}
+
+
+impl From<u8> for Worker_NetworkSecurityType {
+    fn from(security_type: u8) -> Self {
+        match security_type {
+            0 => Self::WORKER_NETWORK_SECURITY_TYPE_INSECURE,
+            1 => Self::WORKER_NETWORK_SECURITY_TYPE_TLS,
+            _ => panic!("Invalid byte"),
+        }
+    }
+}
+
+
+impl Into<u8> for Worker_NetworkSecurityType {
+    fn into(self) -> u8 {
+        match self {
+            Self::WORKER_NETWORK_SECURITY_TYPE_INSECURE => 0,
+            Self::WORKER_NETWORK_SECURITY_TYPE_TLS => 1,
+        }
+    }
+}
+
+
+impl From<u8> for Worker_ConstraintType {
+    fn from(data: u8) -> Self {
+        match data {
+            1 => Self::WORKER_CONSTRAINT_TYPE_ENTITY_ID,
+            2 => Self::WORKER_CONSTRAINT_TYPE_COMPONENT,
+            3 => Self::WORKER_CONSTRAINT_TYPE_SPHERE,
+            4 => Self::WORKER_CONSTRAINT_TYPE_AND,
+            5 => Self::WORKER_CONSTRAINT_TYPE_OR,
+            6 => Self::WORKER_CONSTRAINT_TYPE_NOT,
+            _ => panic!("Invalid byte: {}", data),
+        }
+    }
+}
+
+impl Into<u8> for Worker_ConstraintType {
+    fn into(self) -> u8 {
+        match self {
+            Self::WORKER_CONSTRAINT_TYPE_ENTITY_ID => 1,
+            Self::WORKER_CONSTRAINT_TYPE_COMPONENT => 2,
+            Self::WORKER_CONSTRAINT_TYPE_SPHERE => 3,
+            Self::WORKER_CONSTRAINT_TYPE_AND => 4,
+            Self::WORKER_CONSTRAINT_TYPE_OR => 5,
+            Self::WORKER_CONSTRAINT_TYPE_NOT => 6,
+        }
+    }
+}
+
+impl From<u8> for Worker_LogLevel {
+    fn from(log_level: u8) -> Self {
+        match log_level {
+            1 => Self::WORKER_LOG_LEVEL_DEBUG,
+            2 => Self::WORKER_LOG_LEVEL_INFO,
+            3 => Self::WORKER_LOG_LEVEL_WARN,
+            4 => Self::WORKER_LOG_LEVEL_ERROR,
+            5 => Self::WORKER_LOG_LEVEL_FATAL,
+            _ => panic!("Invalid byte"),
+        }
+    }
+}
+
+impl Into<u8> for Worker_LogLevel {
+    fn into(self) -> u8 {
+        match self {
+            Self::WORKER_LOG_LEVEL_DEBUG => 1,
+            Self::WORKER_LOG_LEVEL_INFO => 2,
+            Self::WORKER_LOG_LEVEL_WARN => 3,
+            Self::WORKER_LOG_LEVEL_ERROR => 4,
+            Self::WORKER_LOG_LEVEL_FATAL => 5,
+        }
+    }
+}
+
+impl From<u8> for Worker_Authority {
+    fn from(authority: u8) -> Self {
+        match authority {
+            0 => Self::WORKER_AUTHORITY_NOT_AUTHORITATIVE,
+            1 => Self::WORKER_AUTHORITY_AUTHORITATIVE,
+            2 => Self::WORKER_AUTHORITY_AUTHORITY_LOSS_IMMINENT,
+            _ => panic!("Invalid byte"),
+        }
+    }
+}
+
+impl From<u8> for Worker_StatusCode {
+    fn from(status_code: u8) -> Self {
+        match status_code {
+            1 => Self::WORKER_STATUS_CODE_SUCCESS,
+            2 => Self::WORKER_STATUS_CODE_TIMEOUT,
+            3 => Self::WORKER_STATUS_CODE_NOT_FOUND,
+            4 => Self::WORKER_STATUS_CODE_AUTHORITY_LOST,
+            5 => Self::WORKER_STATUS_CODE_PERMISSION_DENIED,
+            6 => Self::WORKER_STATUS_CODE_APPLICATION_ERROR,
+            7 => Self::WORKER_STATUS_CODE_INTERNAL_ERROR,
+            _ => panic!("Invalid byte"),
+        }
+    }
+}
+
+impl From<u8> for Worker_ConnectionStatusCode {
+    fn from(status_code: u8) -> Self {
+        match status_code {
+            1 => Self::WORKER_CONNECTION_STATUS_CODE_SUCCESS,
+            2 => Self::WORKER_CONNECTION_STATUS_CODE_INTERNAL_ERROR,
+            3 => Self::WORKER_CONNECTION_STATUS_CODE_INVALID_ARGUMENT,
+            4 => Self::WORKER_CONNECTION_STATUS_CODE_NETWORK_ERROR,
+            5 => Self::WORKER_CONNECTION_STATUS_CODE_TIMEOUT,
+            6 => Self::WORKER_CONNECTION_STATUS_CODE_CANCELLED,
+            7 => Self::WORKER_CONNECTION_STATUS_CODE_REJECTED,
+            8 => Self::WORKER_CONNECTION_STATUS_CODE_PLAYER_IDENTITY_TOKEN_EXPIRED,
+            9 => Self::WORKER_CONNECTION_STATUS_CODE_LOGIN_TOKEN_EXPIRED,
+            10 => Self::WORKER_CONNECTION_STATUS_CODE_CAPACITY_EXCEEDED,
+            11 => Self::WORKER_CONNECTION_STATUS_CODE_RATE_EXCEEDED,
+            12 => Self::WORKER_CONNECTION_STATUS_CODE_SERVER_SHUTDOWN,
+            _ => panic!("Invalid byte"),
+        }
+    }
+}
+
+impl From<u8> for Worker_ResultType {
+    fn from(result_type: u8) -> Self {
+        match result_type {
+            1 => Self::WORKER_RESULT_TYPE_COUNT,
+            2 => Self::WORKER_RESULT_TYPE_SNAPSHOT,
+            _ => panic!("Invalid byte"),
+        }
+    }
+}
+
+
+impl Into<u8> for Worker_ResultType {
+    fn into(self) -> u8 {
+        match self {
+            Self::WORKER_RESULT_TYPE_COUNT => 1,
+            Self::WORKER_RESULT_TYPE_SNAPSHOT => 2,
+        }
+    }
+}
+
+impl From<u8> for Worker_OpType {
+    fn from(data: u8) -> Self {
+        match data {
+            1 => Self::WORKER_OP_TYPE_DISCONNECT,
+            2 => Self::WORKER_OP_TYPE_FLAG_UPDATE,
+            3 => Self::WORKER_OP_TYPE_LOG_MESSAGE,
+            4 => Self::WORKER_OP_TYPE_METRICS,
+            5 => Self::WORKER_OP_TYPE_CRITICAL_SECTION,
+            6 => Self::WORKER_OP_TYPE_ADD_ENTITY,
+            7 => Self::WORKER_OP_TYPE_REMOVE_ENTITY,
+            8 => Self::WORKER_OP_TYPE_RESERVE_ENTITY_IDS_RESPONSE,
+            9 => Self::WORKER_OP_TYPE_CREATE_ENTITY_RESPONSE,
+            10 => Self::WORKER_OP_TYPE_DELETE_ENTITY_RESPONSE,
+            11 => Self::WORKER_OP_TYPE_ENTITY_QUERY_RESPONSE,
+            12 => Self::WORKER_OP_TYPE_ADD_COMPONENT,
+            13 => Self::WORKER_OP_TYPE_REMOVE_COMPONENT,
+            14 => Self::WORKER_OP_TYPE_AUTHORITY_CHANGE,
+            15 => Self::WORKER_OP_TYPE_COMPONENT_UPDATE,
+            16 => Self::WORKER_OP_TYPE_COMMAND_REQUEST,
+            17 => Self::WORKER_OP_TYPE_COMMAND_RESPONSE,
+            _ => panic!("Invalid byte: {}", data),
+        }
     }
 }
